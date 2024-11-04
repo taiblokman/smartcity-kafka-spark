@@ -1,0 +1,62 @@
+version: "3"
+networks:
+  kafka-network:
+
+x-spark-common: &spark-common
+  image: bitnami/spark:latest
+  volumes:
+    - ./jobs:/opt/bitnami/spark/jobs
+  command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+  depends_on:
+    - spark-master
+  environment:
+    SPARK_MODE: Worker
+    SPARK_WORKER_CORES: 2
+    SPARK_WORKER_MEMORY: 1g
+    SPARK_MASTER_URL: spark://spark-master:7077
+  networks:
+    - kafka-network
+
+services:
+  zookeeper:
+    image: 'bitnami/zookeeper:latest'
+    ports:
+      - '2181:2181'
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+      - kafka-network
+
+  kafka:
+    image: 'bitnami/kafka:latest'
+    user: root
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://127.0.0.1:9092
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    volumes:
+      - ./Kafka:/bitnami/kafka
+    networks:
+      - kafka-network
+    depends_on:
+      - zookeeper
+
+  spark-master:
+    image: bitnami/spark:latest
+    volumes:
+      - ./jobs:/opt/bitnami/spark/jobs
+    command: bin/spark-class org.apache.spark.deploy.master/Master
+    ports:
+      - "9090:8080"
+      - "7077:7077"
+    networks:
+      - kafka-network
+  spark-worker-1:
+    <<: *spark-common
+  spark-worker-2:
+    <<: *spark-common
