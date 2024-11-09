@@ -1,8 +1,7 @@
 version: '3'
-
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.7.1
+    image: confluentinc/cp-zookeeper:latest.arm64
     hostname: zookeeper
     container_name: zookeeper
     ports:
@@ -18,7 +17,7 @@ services:
     networks:
       - kafka-network
   broker:
-    image: confluentinc/cp-server:7.7.1
+    image: confluentinc/cp-server:latest.arm64
     hostname: broker
     container_name: broker
     depends_on:
